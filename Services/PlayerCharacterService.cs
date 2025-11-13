@@ -47,17 +47,22 @@ namespace Demo3DAPI.Services
 
         public async Task<IEnumerable<PlayerCharacter>> GetAllCharacters()
         {
-            return await _context.PlayerCharacters.ToListAsync();
+            return await _context.PlayerCharacters
+                .Include(c => c.PlayerAccount)
+                .ToListAsync();
         }
 
         public async Task<PlayerCharacter?> GetCharacterById(int id)
         {
-            return await _context.PlayerCharacters.FindAsync(id);
+            return await _context.PlayerCharacters
+                .Include(c => c.PlayerAccount)
+                .FirstOrDefaultAsync(c => c.ID == id);
         }
 
         public async Task<IEnumerable<PlayerCharacter>> GetCharactersByAccountId(int accountId)
         {
             return await _context.PlayerCharacters
+                .Include(c => c.PlayerAccount)
                 .Where(c => c.PlayerAccountID == accountId)
                 .ToListAsync();
         }

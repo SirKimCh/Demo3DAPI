@@ -43,8 +43,15 @@ namespace Demo3DAPI.Controllers
         [SwaggerResponse(400, "Dữ liệu không hợp lệ")]
         public async Task<IActionResult> Create([FromBody] CreatePlayerAccountDto createDto)
         {
-            var newAccount = await _accountService.CreateAccount(createDto);
-            return CreatedAtAction(nameof(GetById), new { id = newAccount.ID }, newAccount);
+            try
+            {
+                var newAccount = await _accountService.CreateAccount(createDto);
+                return CreatedAtAction(nameof(GetById), new { id = newAccount.ID }, newAccount);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("Update/{id}")]

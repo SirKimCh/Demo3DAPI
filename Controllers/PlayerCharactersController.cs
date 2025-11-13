@@ -74,7 +74,7 @@ namespace Demo3DAPI.Controllers
         }
 
         [HttpPost("Delete/{id}")]
-        [SwaggerOperation(Summary = "Xóa nhán vật", Description = "Xóa nhân vật theo ID")]
+        [SwaggerOperation(Summary = "Xóa nhân vật", Description = "Xóa nhân vật theo ID")]
         [SwaggerResponse(200, "Xóa thành công")]
         [SwaggerResponse(404, "Không tìm thấy nhân vật")]
         public async Task<IActionResult> Delete(int id)

@@ -17,6 +17,14 @@ namespace Demo3DAPI.Services
 
         public async Task<PlayerAccount> CreateAccount(CreatePlayerAccountDto accountDto)
         {
+            var existingAccount = await _context.PlayerAccounts
+                .FirstOrDefaultAsync(a => a.UserName == accountDto.UserName);
+            
+            if (existingAccount != null)
+            {
+                throw new InvalidOperationException($"Username '{accountDto.UserName}' already exists.");
+            }
+
             var account = new PlayerAccount
             {
                 UserName = accountDto.UserName,
@@ -49,7 +57,9 @@ namespace Demo3DAPI.Services
 
         public async Task<IEnumerable<PlayerAccount>> GetAllAccounts()
         {
-            return await _context.PlayerAccounts.ToListAsync();
+            return await _context.PlayerAccounts
+                .Include(a => a.Characters)
+                .ToListAsync();
         }
 
         public async Task<bool> UpdateAccount(int id, UpdatePlayerAccountDto accountDto)
