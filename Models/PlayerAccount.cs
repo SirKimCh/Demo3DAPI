@@ -23,6 +23,9 @@ namespace Demo3DAPI.Models
         [StringLength(20)]
         public string? PhoneNumber { get; set; }
 
+        public int RoleID { get; set; }
+        public virtual Role? Role { get; set; }
+
         public virtual ICollection<PlayerCharacter> Characters { get; set; } = new List<PlayerCharacter>();
     }
 }
