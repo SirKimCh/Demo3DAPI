@@ -2,6 +2,45 @@
 
 namespace Demo3DAPI.DTOs
 {
+    public class LoginDto
+    {
+        [Required]
+        [StringLength(50)]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class RegisterDto
+    {
+        [Required]
+        [StringLength(50)]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Password { get; set; } = string.Empty;
+
+        [StringLength(100)]
+        public string? FullName { get; set; }
+
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
+    }
+
+    public class LoginResponseDto
+    {
+        public int ID { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string? FullName { get; set; }
+        public int RoleID { get; set; }
+        public string? RoleName { get; set; }
+        public string Token { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
+
     public class CreatePlayerAccountDto
     {
         [Required]

@@ -14,14 +14,15 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerConfiguration();
 
-// Uncomment the line below to enable JWT authentication
-// builder.Services.AddJwtConfiguration(builder.Configuration);
+// Enable JWT authentication
+builder.Services.AddJwtConfiguration(builder.Configuration);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IPlayerAccountService, PlayerAccountService>();
 builder.Services.AddScoped<IPlayerCharacterService, PlayerCharacterService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 var app = builder.Build();
 
@@ -32,8 +33,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Uncomment the line below to enable JWT authentication
-// app.UseAuthentication();
+// Enable JWT authentication
+app.UseAuthentication();
 
 app.UseAuthorization();
 app.MapControllers();

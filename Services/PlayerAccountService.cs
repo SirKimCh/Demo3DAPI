@@ -15,6 +15,78 @@ namespace Demo3DAPI.Services
             _context = context;
         }
 
+        public async Task<LoginResponseDto?> Login(LoginDto loginDto, IJwtService jwtService)
+        {
+            var account = await _context.PlayerAccounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(a => a.UserName == loginDto.UserName);
+
+            if (account == null)
+            {
+                return null;
+            }
+
+            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginDto.Password, account.Password);
+            
+            if (!isPasswordValid)
+            {
+                return null;
+            }
+
+            var token = jwtService.GenerateToken(account);
+
+            return new LoginResponseDto
+            {
+                ID = account.ID,
+                UserName = account.UserName,
+                FullName = account.FullName,
+                RoleID = account.RoleID,
+                RoleName = account.Role?.Name,
+                Token = token,
+                Message = "Login successful"
+            };
+        }
+
+        public async Task<PlayerAccountResponseDto> Register(RegisterDto registerDto)
+        {
+            var existingAccount = await _context.PlayerAccounts
+                .FirstOrDefaultAsync(a => a.UserName == registerDto.UserName);
+            
+            if (existingAccount != null)
+            {
+                throw new InvalidOperationException($"Username '{registerDto.UserName}' already exists.");
+            }
+
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+
+            var account = new PlayerAccount
+            {
+                UserName = registerDto.UserName,
+                Password = hashedPassword,
+                FullName = registerDto.FullName,
+                PhoneNumber = registerDto.PhoneNumber,
+                RoleID = 2 // Default User role
+            };
+
+            _context.PlayerAccounts.Add(account);
+            await _context.SaveChangesAsync();
+
+            var createdAccount = await _context.PlayerAccounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(a => a.ID == account.ID);
+
+            return new PlayerAccountResponseDto
+            {
+                ID = account.ID,
+                UserName = account.UserName,
+                FullName = account.FullName,
+                PhoneNumber = account.PhoneNumber,
+                RoleID = account.RoleID,
+                RoleName = createdAccount?.Role?.Name,
+                Characters = new List<CharacterBasicDto>()
+            };
+        }
+
         public async Task<PlayerAccountResponseDto> CreateAccount(CreatePlayerAccountDto accountDto)
         {
             var existingAccount = await _context.PlayerAccounts
@@ -56,8 +128,17 @@ namespace Demo3DAPI.Services
 
         public async Task<bool> DeleteAccount(int id)
         {
-            var account = await _context.PlayerAccounts.FindAsync(id);
+            var account = await _context.PlayerAccounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(a => a.ID == id);
+            
             if (account == null) return false;
+
+            // Prevent Admin deletion
+            if (account.RoleID == 1 || account.Role?.Name == "Admin")
+            {
+                throw new InvalidOperationException("Cannot delete Admin account.");
+            }
 
             _context.PlayerAccounts.Remove(account);
             await _context.SaveChangesAsync();
