@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using Demo3DAPI.Data;
 using Demo3DAPI.DTOs;
 using Demo3DAPI.Interfaces;
@@ -15,7 +15,7 @@ namespace Demo3DAPI.Services
             _context = context;
         }
 
-        public async Task<PlayerAccount> CreateAccount(CreatePlayerAccountDto accountDto)
+        public async Task<PlayerAccountResponseDto> CreateAccount(CreatePlayerAccountDto accountDto)
         {
             var existingAccount = await _context.PlayerAccounts
                 .FirstOrDefaultAsync(a => a.UserName == accountDto.UserName);
@@ -25,17 +25,33 @@ namespace Demo3DAPI.Services
                 throw new InvalidOperationException($"Username '{accountDto.UserName}' already exists.");
             }
 
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(accountDto.Password);
+
             var account = new PlayerAccount
             {
                 UserName = accountDto.UserName,
-                Password = accountDto.Password,
+                Password = hashedPassword,
                 FullName = accountDto.FullName,
                 PhoneNumber = accountDto.PhoneNumber
             };
 
             _context.PlayerAccounts.Add(account);
             await _context.SaveChangesAsync();
-            return account;
+
+            var createdAccount = await _context.PlayerAccounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(a => a.ID == account.ID);
+
+            return new PlayerAccountResponseDto
+            {
+                ID = account.ID,
+                UserName = account.UserName,
+                FullName = account.FullName,
+                PhoneNumber = account.PhoneNumber,
+                RoleID = account.RoleID,
+                RoleName = createdAccount?.Role?.Name,
+                Characters = new List<CharacterBasicDto>()
+            };
         }
 
         public async Task<bool> DeleteAccount(int id)
@@ -48,17 +64,44 @@ namespace Demo3DAPI.Services
             return true;
         }
 
-        public async Task<PlayerAccount?> GetAccountById(int id)
+        public async Task<PlayerAccountResponseDto?> GetAccountById(int id)
         {
-            return await _context.PlayerAccounts
+            var account = await _context.PlayerAccounts
+                .Include(a => a.Role)
                 .Include(a => a.Characters)
                 .FirstOrDefaultAsync(a => a.ID == id);
+
+            if (account == null) return null;
+
+            return new PlayerAccountResponseDto
+            {
+                ID = account.ID,
+                UserName = account.UserName,
+                FullName = account.FullName,
+                PhoneNumber = account.PhoneNumber,
+                RoleID = account.RoleID,
+                RoleName = account.Role?.Name,
+                Characters = account.Characters.Select(c => new CharacterBasicDto
+                {
+                    ID = c.ID,
+                    Name = c.Name,
+                    Level = c.Level
+                }).ToList()
+            };
         }
 
-        public async Task<IEnumerable<PlayerAccount>> GetAllAccounts()
+        public async Task<IEnumerable<PlayerAccountBasicDto>> GetAllAccounts()
         {
             return await _context.PlayerAccounts
-                .Include(a => a.Characters)
+                .Include(a => a.Role)
+                .Select(a => new PlayerAccountBasicDto
+                {
+                    ID = a.ID,
+                    UserName = a.UserName,
+                    FullName = a.FullName,
+                    RoleID = a.RoleID,
+                    RoleName = a.Role != null ? a.Role.Name : null
+                })
                 .ToListAsync();
         }
 
@@ -67,8 +110,11 @@ namespace Demo3DAPI.Services
             var account = await _context.PlayerAccounts.FindAsync(id);
             if (account == null) return false;
 
-            account.FullName = accountDto.FullName;
-            account.PhoneNumber = accountDto.PhoneNumber;
+            if (accountDto.FullName != null)
+                account.FullName = accountDto.FullName;
+            
+            if (accountDto.PhoneNumber != null)
+                account.PhoneNumber = accountDto.PhoneNumber;
 
             _context.Entry(account).State = EntityState.Modified;
             await _context.SaveChangesAsync();
