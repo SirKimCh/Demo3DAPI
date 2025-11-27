@@ -104,7 +104,8 @@ namespace Demo3DAPI.Services
                 UserName = accountDto.UserName,
                 Password = hashedPassword,
                 FullName = accountDto.FullName,
-                PhoneNumber = accountDto.PhoneNumber
+                PhoneNumber = accountDto.PhoneNumber,
+                RoleID = 2
             };
 
             _context.PlayerAccounts.Add(account);

@@ -6,6 +6,16 @@ using Demo3DAPI.Config;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowGameClients", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
@@ -30,10 +40,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerConfiguration();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
+app.UseCors("AllowGameClients");
 
-// Enable JWT authentication
 app.UseAuthentication();
 
 app.UseAuthorization();

@@ -8,6 +8,7 @@ namespace Demo3DAPI.DTOs
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        [Range(1, int.MaxValue, ErrorMessage = "Level must be at least 1")]
         public int Level { get; set; } = 1;
 
         [Required]
@@ -20,6 +21,7 @@ namespace Demo3DAPI.DTOs
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        [Range(1, int.MaxValue, ErrorMessage = "Level must be at least 1")]
         public int Level { get; set; }
     }
 
